@@ -13,7 +13,7 @@ using System.Web.Http;
 
 namespace HouseholdBudgeter.Controllers
 {
-    [RoutePrefix("api/household")]
+    [RoutePrefix("api/houseHold")]
     [Authorize]
     public class HouseHoldController : ApiController
     {
@@ -173,6 +173,12 @@ namespace HouseholdBudgeter.Controllers
 
             var userId = User.Identity.GetUserId();
 
+            if (houseHold.OwnerId == userId)
+            {
+                ModelState.AddModelError("Fail", "You are already the Owner of the requested House Hold");
+                return BadRequest(ModelState);
+            }
+
             if (!houseHold.InvitedUsers.Any(t => t.Id == userId))
             {
                 ModelState.AddModelError("Not Invited", "You have not yet been invited by the Owner of the requested House Hold");
@@ -226,7 +232,7 @@ namespace HouseholdBudgeter.Controllers
             return Ok();
         }
 
-        [Route("{id}/getAllMembers")]
+        [Route("{id}/get-all-members")]
         public IHttpActionResult GetAllMembers(int id)
         {
             var houseHold = Context
@@ -259,141 +265,6 @@ namespace HouseholdBudgeter.Controllers
             }).ToList();
 
             return Ok(members);
-        }
-
-        [Route("{id}/createCategory")]
-        public IHttpActionResult CreateCategory(int id, CategoryBindingModel formData)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var houseHold = Context
-                .HouseHolds
-                .FirstOrDefault(p => p.Id == id);
-
-            if (houseHold == null)
-            {
-                return NotFound();
-            }
-
-            var userId = User
-                .Identity
-                .GetUserId();
-
-            if (userId != houseHold.OwnerId)
-            {
-                ModelState.AddModelError("Not the Owner", "Only the owner create Categories");
-                return BadRequest(ModelState);
-            }
-
-            var category = Mapper.Map<Category>(formData);
-            category.HouseHoldId = id;
-
-            houseHold.Categories.Add(category);
-            Context.SaveChanges();
-
-            var model = Mapper.Map<CategoryViewModel>(category);
-
-            return Ok(model);
-        }
-
-        [Route("editCategory/{id}")]
-        public IHttpActionResult editCategory(int id, CategoryBindingModel formData)
-        {
-            var category = Context
-                .Categories
-                .FirstOrDefault(p => p.Id == id);
-
-            if (category == null)
-            {
-                return NotFound();
-            }
-
-            var owner = category
-                .HouseHold
-                .OwnerId;
-
-            var userId = User
-                .Identity
-                .GetUserId();
-
-            if (userId != owner)
-            {
-                ModelState.AddModelError("Not the Owner", "Only the owner can edit Categories");
-                return BadRequest(ModelState);
-            }
-
-            Mapper.Map(formData, category);
-            category.DateUpdated = DateTime.Now;
-
-            Context.SaveChanges();
-
-            var model = Mapper.Map<HouseHoldViewModel>(category);
-
-            return Ok(model);
-        }
-
-        [Route("deleteCategory/{id}")]
-        public IHttpActionResult DeleteCategory(int id)
-        {
-            var category = Context
-                  .Categories
-                  .FirstOrDefault(p => p.Id == id);
-
-            if (category == null)
-            {
-                return NotFound();
-            }
-
-            var owner = category.HouseHold.OwnerId;
-
-            var user = User.Identity.GetUserId();
-            if (user != owner)
-            {
-                ModelState.AddModelError("Not the Owner", "Only the owner can delete a category");
-                return BadRequest(ModelState);
-            }
-
-            Context.Categories.Remove(category);
-            Context.SaveChanges();
-
-            return Ok();
-        }
-
-        [Route("{id}/getAllCategories")]
-        public IHttpActionResult GetAllCategories(int id)
-        {
-            var houseHold = Context
-                .HouseHolds
-                .FirstOrDefault(p => p.Id == id);
-
-            if (houseHold == null)
-            {
-                return NotFound();
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var user = User.Identity.GetUserId();
-
-            if (!houseHold.Members.Any(t => t.Id == user) && houseHold.OwnerId != user)
-            {
-                ModelState.AddModelError("Not a Member", "You are not a part of the requested HouseHold");
-                return BadRequest(ModelState);
-            }
-
-            var model = Context
-                .Categories
-                .Where(p => p.HouseHoldId == id)
-                .ProjectTo<CategoryViewModel>()
-                .ToList();
-
-            return Ok(model);
         }
     }
 }
