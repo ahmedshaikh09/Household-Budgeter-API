@@ -12,9 +12,10 @@ namespace HouseholdBudgeter.Models.Domain
         public string Title { get; set; }
         public string Description { get; set; }
         public decimal Amount { get; set; }
-        public DateTime Date { get; set; }
+  
         public bool Void { get; set; }
-        
+
+        public DateTime TransactionDate { get; set; }
         public DateTime DateCreated { get; set; }
         public DateTime? DateUpdated { get; set; }
 

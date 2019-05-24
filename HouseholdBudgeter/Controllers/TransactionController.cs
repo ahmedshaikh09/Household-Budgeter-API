@@ -55,21 +55,15 @@ namespace HouseholdBudgeter.Controllers
 
             var member = bankaccount.HouseHold.Members.FirstOrDefault(p => p.Id == userId);
 
-            if (member == null)
+            if (member == null && bankaccount.HouseHold.OwnerId != userId)
             {
-                ModelState.AddModelError("Not a member or creator", "Only the members or owner of the Household can create a transaction for the Bank Account");
-                return BadRequest(ModelState);
-            }
-            else if (bankaccount.HouseHold.OwnerId != userId)
-            {
-                ModelState.AddModelError("Not a member or creator", "Only the members or owner of the Household can create a transaction for the Bank Account");
+                ModelState.AddModelError("Not a member or owner", "Only the members or owner of the Household can create a transaction for the Bank Account");
                 return BadRequest(ModelState);
             }
 
             var transaction = Mapper.Map<Transaction>(formData);
-            transaction.BankAccount = bankaccount;
+            transaction.BankAccountId = id;
             transaction.CreatorId = userId;
-            transaction.Category = category;
 
             if (transaction.Amount < 0)
             {
@@ -80,11 +74,10 @@ namespace HouseholdBudgeter.Controllers
                 bankaccount.Balance = transaction.Amount + bankaccount.Balance;
             }
 
-
             bankaccount.Transactions.Add(transaction);
             Context.SaveChanges();
 
-            var model = Mapper.Map<Transaction>(transaction);
+            var model = Mapper.Map<TransactionViewModel>(transaction);
 
             return Ok(model);
         }
@@ -115,12 +108,7 @@ namespace HouseholdBudgeter.Controllers
                 .Creator
                 .Id;
 
-            if (userId != creator)
-            {
-                ModelState.AddModelError("Not the owner or creator", "Only the creator of the transaction or owner of the Household can edit");
-                return BadRequest(ModelState);
-            }
-            else if (transaction.BankAccount.HouseHold.OwnerId != userId)
+            if (userId != creator && transaction.BankAccount.HouseHold.OwnerId != userId)
             {
                 ModelState.AddModelError("Not the owner or creator", "Only the creator of the transaction or owner of the Household can edit");
                 return BadRequest(ModelState);
@@ -171,12 +159,7 @@ namespace HouseholdBudgeter.Controllers
                 .Creator
                 .Id;
 
-            if (userId != creator)
-            {
-                ModelState.AddModelError("Not the owner or creator", "Only the creator of the transaction or owner of the Household can delete");
-                return BadRequest(ModelState);
-            }
-            else if (owner != userId)
+            if (userId != creator && owner != userId)
             {
                 ModelState.AddModelError("Not the owner or creator", "Only the creator of the transaction or owner of the Household can delete");
                 return BadRequest(ModelState);
@@ -211,12 +194,7 @@ namespace HouseholdBudgeter.Controllers
                 .Members
                 .FirstOrDefault(p => p.Id == userId);
 
-            if (member == null)
-            {
-                ModelState.AddModelError("Not the member or creator", "Only the members or owner of the Household can create view all transactions of the Bank Account");
-                return BadRequest(ModelState);
-            }
-            else if (bankaccount.HouseHold.OwnerId != userId)
+            if (member == null && bankaccount.HouseHold.OwnerId != userId)
             {
                 ModelState.AddModelError("Not the member or creator", "Only the members or owner of the Household can create view all transactions of the Bank Account");
                 return BadRequest(ModelState);
@@ -257,18 +235,12 @@ namespace HouseholdBudgeter.Controllers
                 .Creator
                 .Id;
 
-            if (userId != creator)
-            {
-                ModelState.AddModelError("Not the owner or creator", "Only the creator of the transaction or owner of the Household can void it");
-                return BadRequest(ModelState);
-            }
-            else if (owner != userId)
+            if (userId != creator && owner != userId)
             {
                 ModelState.AddModelError("Not the owner or creator", "Only the creator of the transaction or owner of the Household can void it");
                 return BadRequest(ModelState);
             }
   
-
             transaction.Void = true;
             transaction.BankAccount.Balance = transaction.Amount - transaction.BankAccount.Balance;
             Context.SaveChanges();
