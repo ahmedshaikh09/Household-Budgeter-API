@@ -23,6 +23,7 @@ namespace HouseholdBudgeter.Models.Domain
         public virtual List<ApplicationUser> InvitedUsers { get; set; }
 
         public virtual List<Category> Categories { get; set; }
+        public virtual List<BankAccount> BankAccounts { get; set; }
 
         public HouseHold()
         {
@@ -30,6 +31,7 @@ namespace HouseholdBudgeter.Models.Domain
             Members = new List<ApplicationUser>();
             InvitedUsers = new List<ApplicationUser>();
             Categories = new List<Category>();
+            BankAccounts = new List<BankAccount>();
         }
     }
 }

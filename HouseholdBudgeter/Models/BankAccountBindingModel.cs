@@ -6,9 +6,12 @@ using System.Web;
 
 namespace HouseholdBudgeter.Models
 {
-    public class MemberBindingModel
+    public class BankAccountBindingModel
     {
         [Required]
-        public string UserEmail { get; set; }
+        public string Name { get; set; }
+
+        [Required]
+        public string Description { get; set; }
     }
 }

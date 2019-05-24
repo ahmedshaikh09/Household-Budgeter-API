@@ -15,6 +15,8 @@ namespace HouseholdBudgeter.Models
     {
         public virtual List<HouseHold> HouseHolds { get; set; }
 
+        public virtual List<Transaction> Transactions { get; set; }
+
         [InverseProperty(nameof(HouseHold.Owner))]
         public virtual List<HouseHold> OwnedHouseHolds { get; set; }
 
@@ -47,8 +49,22 @@ namespace HouseholdBudgeter.Models
             : base("DefaultConnection", throwIfV1Schema: false)
         {
         }
+
         public DbSet<HouseHold> HouseHolds { get; set; }
         public DbSet<Category> Categories { get; set; }
+        public DbSet<BankAccount> BankAccounts { get; set; }
+        public DbSet<Transaction> Transactions { get; set; }
+
+
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<HouseHold>()
+                .HasMany<Category>(s => s.Categories)
+                .WithRequired(s => s.HouseHold)
+                .WillCascadeOnDelete(false);
+        }
 
         public static ApplicationDbContext Create()
         {

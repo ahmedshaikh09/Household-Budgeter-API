@@ -142,7 +142,8 @@ namespace HouseholdBudgeter.Controllers
 
             if (user == null)
             {
-                return NotFound();
+                ModelState.AddModelError("Not Found", "User does not exist");
+                return BadRequest(ModelState);
             }
 
             houseHold.InvitedUsers.Add(user);

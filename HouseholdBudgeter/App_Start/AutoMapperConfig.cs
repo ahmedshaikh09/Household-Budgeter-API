@@ -18,6 +18,10 @@ namespace HouseholdBudgeter.App_Start
                 cfg.CreateMap<HouseHold, HouseHoldBindingModel>().ReverseMap();
                 cfg.CreateMap<Category, CategoryViewModel>().ReverseMap();
                 cfg.CreateMap<Category, CategoryBindingModel>().ReverseMap();
+                cfg.CreateMap<BankAccount, BankAccountViewModel>().ReverseMap();
+                cfg.CreateMap<BankAccount, BankAccountBindingModel>().ReverseMap();
+                cfg.CreateMap<Transaction, TransactionViewModel>().ReverseMap();
+                cfg.CreateMap<Transaction, TransactionBindingModel>().ReverseMap();
             });
         }
     }
