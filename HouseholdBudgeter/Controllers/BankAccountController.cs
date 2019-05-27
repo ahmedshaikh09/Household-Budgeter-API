@@ -12,7 +12,7 @@ using System.Web.Http;
 
 namespace HouseholdBudgeter.Controllers
 {
-    [RoutePrefix("api/bankAccount")]
+    [RoutePrefix("api/bankaccount")]
     [Authorize]
     public class BankAccountController : ApiController
     {
@@ -159,8 +159,9 @@ namespace HouseholdBudgeter.Controllers
             return Ok(model);
         }
 
-        [Route("{id}")]
-        public IHttpActionResult Caluculate(int id)
+        [Route("{id}/calculate")]
+        [HttpGet]
+        public IHttpActionResult Calculate(int id)
         {
             var bankAccount = Context
                   .BankAccounts

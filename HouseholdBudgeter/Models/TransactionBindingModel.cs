@@ -19,6 +19,7 @@ namespace HouseholdBudgeter.Models
         [Required]
         public decimal Amount { get; set; }
 
+        [Required]
         public DateTime TransactionDate { get; set; }
     }
 }

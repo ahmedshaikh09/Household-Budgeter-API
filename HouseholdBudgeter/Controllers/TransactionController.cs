@@ -117,14 +117,9 @@ namespace HouseholdBudgeter.Controllers
             Mapper.Map(formData, transaction);
             transaction.DateUpdated = DateTime.Now;
 
-            if (transaction.Amount < 0)
-            {
-                transaction.BankAccount.Balance = transaction.Amount - transaction.BankAccount.Balance;
-            }
-            else
-            {
-                transaction.BankAccount.Balance = transaction.Amount + transaction.BankAccount.Balance;
-            }
+
+            transaction.BankAccount.Balance = transaction.Amount + transaction.BankAccount.Balance;
+
 
             Context.SaveChanges();
 
@@ -165,7 +160,7 @@ namespace HouseholdBudgeter.Controllers
                 return BadRequest(ModelState);
             }
 
-            transaction.BankAccount.Balance = transaction.Amount - transaction.BankAccount.Balance;
+            transaction.BankAccount.Balance = transaction.BankAccount.Balance - transaction.Amount;
             Context.Transactions.Remove(transaction);
             Context.SaveChanges();
 
@@ -240,7 +235,7 @@ namespace HouseholdBudgeter.Controllers
                 ModelState.AddModelError("Not the owner or creator", "Only the creator of the transaction or owner of the Household can void it");
                 return BadRequest(ModelState);
             }
-  
+
             transaction.Void = true;
             transaction.BankAccount.Balance = transaction.Amount - transaction.BankAccount.Balance;
             Context.SaveChanges();
