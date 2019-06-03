@@ -136,6 +136,7 @@ namespace HouseholdBudgeter.Controllers
         }
 
         // POST api/Account/ForgotPassword
+        [AllowAnonymous]
         [Route("ForgotPassword")]
         public async Task<IHttpActionResult> ForgotPassword(ForgotPasswordBindingModel model)
         {
@@ -161,6 +162,7 @@ namespace HouseholdBudgeter.Controllers
         }
 
         // POST api/Account/ResetPassword
+        [AllowAnonymous]
         [Route("ResetPassword")]
         public async Task<IHttpActionResult> ResetPassword(ResetPasswordBindingModel model)
         {

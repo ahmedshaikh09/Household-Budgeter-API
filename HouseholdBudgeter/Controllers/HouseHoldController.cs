@@ -24,6 +24,38 @@ namespace HouseholdBudgeter.Controllers
             Context = new ApplicationDbContext();
         }
 
+        [Route("get-all")]
+        public IHttpActionResult GetAll()
+        {
+            var model = Context
+                .HouseHolds
+                .ProjectTo<HouseHoldViewModel>()
+                .ToList();
+
+            return Ok(model);
+        }
+
+        [Route("{id}")]
+        public IHttpActionResult Get(int id)
+        {
+            var houseHold = Context
+                            .HouseHolds
+                            .FirstOrDefault(p => p.Id == id);
+
+            if (houseHold == null)
+            {
+                return NotFound();
+            }
+
+            var model = Context
+                .HouseHolds
+                .Where(p => p.Id == houseHold.Id)
+                .ProjectTo<HouseHoldViewModel>();
+
+            return Ok(model);
+        }
+
+        [Route("create")]
         public IHttpActionResult Post(HouseHoldBindingModel formData)
         {
             if (!ModelState.IsValid)
@@ -39,6 +71,12 @@ namespace HouseholdBudgeter.Controllers
 
             houseHold.OwnerId = userId;
 
+            var user = Context
+                .Users
+                .FirstOrDefault(p => p.Id == userId);
+
+            houseHold.Members.Add(user);
+
             Context.HouseHolds.Add(houseHold);
             Context.SaveChanges();
 
@@ -47,7 +85,7 @@ namespace HouseholdBudgeter.Controllers
             return Ok(model);
         }
 
-        [Route("{id}")]
+        [Route("edit/{id}")]
         public IHttpActionResult Put(int id, HouseHoldBindingModel formData)
         {
             var houseHold = Context
@@ -218,6 +256,12 @@ namespace HouseholdBudgeter.Controllers
             var userId = User
                 .Identity
                 .GetUserId();
+
+            if (houseHold.OwnerId == userId)
+            {
+                ModelState.AddModelError("Owner can't leave", "Owner Can Only delete the house hold, not leave it.");
+                return BadRequest(ModelState);
+            }
 
             if (!houseHold.Members.Any(t => t.Id == userId))
             {
