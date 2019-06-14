@@ -237,6 +237,7 @@
     <Compile Include="Models\Domain\Category.cs" />
     <Compile Include="Models\Domain\HouseHold.cs" />
     <Compile Include="Models\Domain\Transaction.cs" />
+    <Compile Include="Models\EditTransactionBindingModel.cs" />
     <Compile Include="Models\EmailService.cs" />
     <Compile Include="Models\HouseHoldBindingModel.cs" />
     <Compile Include="Models\HouseHoldViewModel.cs" />

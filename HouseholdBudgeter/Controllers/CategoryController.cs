@@ -23,7 +23,8 @@ namespace HouseholdBudgeter.Controllers
             Context = new ApplicationDbContext();
         }
 
-        [Route("house-hold/{id}")]
+        [HttpPost]
+        [Route("create/{id}")]
         public IHttpActionResult Create(int id, CategoryBindingModel formData)
         {
             if (!ModelState.IsValid)
@@ -61,9 +62,14 @@ namespace HouseholdBudgeter.Controllers
             return Ok(model);
         }
 
-        [Route("{id}")]
+        [Route("edit/{id}")]
         public IHttpActionResult Put(int id, CategoryBindingModel formData)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var category = Context
                 .Categories
                 .FirstOrDefault(p => p.Id == id);
@@ -97,7 +103,8 @@ namespace HouseholdBudgeter.Controllers
             return Ok(model);
         }
 
-        [Route("{id}")]
+        [HttpPost]
+        [Route("delete/{id}")]
         public IHttpActionResult Delete(int id)
         {
             var category = Context
@@ -124,7 +131,7 @@ namespace HouseholdBudgeter.Controllers
             return Ok();
         }
 
-        [Route("house-hold/{id}/get-all")]
+        [Route("getAll/{id}")]
         public IHttpActionResult GetAll(int id)
         {
             var houseHold = Context
@@ -154,6 +161,22 @@ namespace HouseholdBudgeter.Controllers
                 .Where(p => p.HouseHoldId == id)
                 .ProjectTo<CategoryViewModel>()
                 .ToList();
+
+            return Ok(model);
+        }
+        [Route("get/{id}")]
+        public IHttpActionResult Get(int id)
+        {
+            var category = Context
+             .Categories
+             .FirstOrDefault(p => p.Id == id);
+
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            var model = Mapper.Map<CategoryViewModel>(category);
 
             return Ok(model);
         }

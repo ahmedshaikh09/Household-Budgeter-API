@@ -35,7 +35,7 @@ namespace HouseholdBudgeter.Controllers
             return Ok(model);
         }
 
-        [Route("{id}")]
+        [Route("get/{id}")]
         public IHttpActionResult Get(int id)
         {
             var houseHold = Context
@@ -47,10 +47,7 @@ namespace HouseholdBudgeter.Controllers
                 return NotFound();
             }
 
-            var model = Context
-                .HouseHolds
-                .Where(p => p.Id == houseHold.Id)
-                .ProjectTo<HouseHoldViewModel>();
+            var model = Mapper.Map<HouseHoldViewModel>(houseHold);
 
             return Ok(model);
         }
@@ -119,7 +116,8 @@ namespace HouseholdBudgeter.Controllers
             return Ok(model);
         }
 
-        [Route("{id}")]
+        [HttpPost]
+        [Route("delete/{id}")]
         public IHttpActionResult Delete(int id)
         {
             var houseHold = Context
@@ -142,6 +140,14 @@ namespace HouseholdBudgeter.Controllers
             }
 
             Context.HouseHolds.Remove(houseHold);
+
+            var conntectedCategories =   Context.Categories.Where(p => p.HouseHoldId == id).ToList();
+
+            foreach (var category in conntectedCategories)
+            {
+                Context.Categories.Remove(category);
+            }
+
             Context.SaveChanges();
 
             return Ok();

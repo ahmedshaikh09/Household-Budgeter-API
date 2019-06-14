@@ -23,7 +23,8 @@ namespace HouseholdBudgeter.Controllers
             Context = new ApplicationDbContext();
         }
 
-        [Route("house-hold/{id}")]
+        [HttpPost]
+        [Route("create/{id}")]
         public IHttpActionResult Create(int id, BankAccountBindingModel formData)
         {
             if (!ModelState.IsValid)
@@ -62,7 +63,7 @@ namespace HouseholdBudgeter.Controllers
             return Ok(model);
         }
 
-        [Route("{id}")]
+        [Route("edit/{id}")]
         public IHttpActionResult Put(int id, BankAccountBindingModel formData)
         {
             var bankAccount = Context
@@ -98,7 +99,8 @@ namespace HouseholdBudgeter.Controllers
             return Ok(model);
         }
 
-        [Route("{id}")]
+        [HttpPost]
+        [Route("delete/{id}")]
         public IHttpActionResult Delete(int id)
         {
             var bankAccount = Context
@@ -125,7 +127,7 @@ namespace HouseholdBudgeter.Controllers
             return Ok();
         }
 
-        [Route("house-hold/{id}/get-all")]
+        [Route("getAll/{id}")]
         public IHttpActionResult GetAll(int id)
         {
             var houseHold = Context
@@ -159,7 +161,7 @@ namespace HouseholdBudgeter.Controllers
             return Ok(model);
         }
 
-        [Route("{id}/calculate")]
+        [Route("calculate/{id}")]
         [HttpGet]
         public IHttpActionResult Calculate(int id)
         {
@@ -188,6 +190,23 @@ namespace HouseholdBudgeter.Controllers
             Context.SaveChanges();
 
             var model = bankAccount.Balance;
+
+            return Ok(model);
+        }
+
+        [Route("get/{id}")]
+        public IHttpActionResult Get(int id)
+        {
+            var bankAccount = Context
+             .BankAccounts
+             .FirstOrDefault(p => p.Id == id);
+
+            if (bankAccount == null)
+            {
+                return NotFound();
+            }
+
+            var model = Mapper.Map<BankAccountViewModel>(bankAccount);
 
             return Ok(model);
         }

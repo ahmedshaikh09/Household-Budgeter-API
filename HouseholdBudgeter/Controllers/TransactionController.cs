@@ -22,152 +22,143 @@ namespace HouseholdBudgeter.Controllers
         {
             Context = new ApplicationDbContext();
         }
-        [Route("bankaccount/{id}")]
-        public IHttpActionResult Create(int id, TransactionBindingModel formData)
+        [HttpPost]
+        [Route("create/{id}")]
+        public IHttpActionResult Create(int id, TransactionBindingModel model)
         {
-            var bankaccount = Context
-                .BankAccounts
-                .FirstOrDefault(p => p.Id == id);
-
-            if (bankaccount == null)
-            {
-                ModelState.AddModelError("Bank Account Not found", "Bank Account id Provided does not exist in the household");
-                return BadRequest(ModelState);
-            }
-
-            var category = bankaccount.HouseHold.Categories
-                .FirstOrDefault(p => p.Id == formData.CategoryId);
-
-            if (category == null)
-            {
-                ModelState.AddModelError("Category Not found", "Category Id Provided does not exist in the household");
-                return BadRequest(ModelState);
-            }
-
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var userId = User
-               .Identity
-               .GetUserId();
+            var userId = User.Identity.GetUserId();
 
-            var member = bankaccount.HouseHold.Members.FirstOrDefault(p => p.Id == userId);
+            var bankAccount = Context
+                .BankAccounts
+                .FirstOrDefault(p => p.Id == model.BankAccountId &&
+                (p.HouseHold.OwnerId == userId ||
+                p.HouseHold.Members.Any(t => t.Id == userId)));
 
-            if (member == null && bankaccount.HouseHold.OwnerId != userId)
+            if (bankAccount == null)
             {
-                ModelState.AddModelError("Not a member or owner", "Only the members or owner of the Household can create a transaction for the Bank Account");
+                ModelState.AddModelError("",
+                    "Bank account doesn't exist or you don't belong to this household");
                 return BadRequest(ModelState);
             }
 
-            var transaction = Mapper.Map<Transaction>(formData);
-            transaction.BankAccountId = id;
+            var category = Context
+                .Categories
+                .FirstOrDefault(p => p.Id == model.CategoryId &&
+                p.HouseHoldId == bankAccount.HouseHoldId);
+
+            if (category == null)
+            {
+                ModelState.AddModelError("", "Category doesn't exist in this household");
+                return BadRequest(ModelState);
+            }
+
+            var transaction = Mapper.Map<Transaction>(model);
             transaction.CreatorId = userId;
 
-            if (transaction.Amount < 0)
-            {
-                bankaccount.Balance = transaction.Amount - bankaccount.Balance;
-            }
-            else
-            {
-                bankaccount.Balance = transaction.Amount + bankaccount.Balance;
-            }
+            bankAccount.Balance += transaction.Amount;
 
-            bankaccount.Transactions.Add(transaction);
+            Context.Transactions.Add(transaction);
             Context.SaveChanges();
 
-            var model = Mapper.Map<TransactionViewModel>(transaction);
+            var result = Mapper.Map<TransactionViewModel>(transaction);
 
-            return Ok(model);
+            return Ok(result);
         }
 
-        [Route("{id}")]
-        public IHttpActionResult Put(int id, TransactionBindingModel formData)
+        [Route("edit/{id}")]
+        [HttpPost]
+        public IHttpActionResult Edit(int id, EditTransactionBindingModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userId = User.Identity.GetUserId();
+
             var transaction = Context
                 .Transactions
                 .FirstOrDefault(p => p.Id == id);
 
             if (transaction == null)
             {
-                ModelState.AddModelError("Transaction Not found", "Transaction id Provided does not exist");
-                return BadRequest(ModelState);
+                return NotFound();
             }
 
-            if (!ModelState.IsValid)
+            if (transaction.BankAccount.HouseHold.OwnerId != userId &&
+                transaction.CreatorId != userId)
             {
+                ModelState.AddModelError("",
+                    "You are not allowed to edit this transaction");
                 return BadRequest(ModelState);
             }
 
-            var userId = User
-               .Identity
-               .GetUserId();
+            var category = Context
+                .Categories
+                .FirstOrDefault(p => p.Id == model.CategoryId &&
+                p.HouseHoldId == transaction.BankAccount.HouseHoldId);
 
-            var creator = transaction
-                .Creator
-                .Id;
-
-            if (userId != creator && transaction.BankAccount.HouseHold.OwnerId != userId)
+            if (category == null)
             {
-                ModelState.AddModelError("Not the owner or creator", "Only the creator of the transaction or owner of the Household can edit");
+                ModelState.AddModelError("", "Category doesn't exist in this household");
                 return BadRequest(ModelState);
             }
 
-            Mapper.Map(formData, transaction);
-            transaction.DateUpdated = DateTime.Now;
+            if (!transaction.Void)
+            {
+                transaction.BankAccount.Balance -= transaction.Amount;
+                transaction.BankAccount.Balance += model.Amount;
+            }
 
-
-            transaction.BankAccount.Balance = transaction.Amount + transaction.BankAccount.Balance;
-
+            Mapper.Map(model, transaction);
 
             Context.SaveChanges();
 
-            var model = Mapper.Map<TransactionViewModel>(transaction);
+            var result = Mapper.Map<TransactionViewModel>(transaction);
 
-            return Ok(model);
+            return Ok(result);
         }
 
-        [Route("{id}")]
+        [HttpPost]
+        [Route("delete/{id}")]
         public IHttpActionResult Delete(int id)
         {
+            var userId = User.Identity.GetUserId();
+
             var transaction = Context
-                  .Transactions
-                  .FirstOrDefault(p => p.Id == id);
+                .Transactions
+                .FirstOrDefault(p => p.Id == id);
 
             if (transaction == null)
             {
-                ModelState.AddModelError("Transaction Not found", "Transaction id Provided does not exist");
-                return BadRequest(ModelState);
+                return NotFound();
             }
 
-            var owner = transaction
-                .BankAccount
-                .HouseHold
-                .OwnerId;
-
-            var userId = User
-              .Identity
-              .GetUserId();
-
-            var creator = transaction
-                .Creator
-                .Id;
-
-            if (userId != creator && owner != userId)
+            if (transaction.BankAccount.HouseHold.OwnerId != userId &&
+                transaction.CreatorId != userId)
             {
-                ModelState.AddModelError("Not the owner or creator", "Only the creator of the transaction or owner of the Household can delete");
+                ModelState.AddModelError("",
+                    "You are not allowed to delete this transaction");
                 return BadRequest(ModelState);
             }
 
-            transaction.BankAccount.Balance = transaction.BankAccount.Balance - transaction.Amount;
+            if (!transaction.Void)
+            {
+                transaction.BankAccount.Balance -= transaction.Amount;
+            }
+
             Context.Transactions.Remove(transaction);
             Context.SaveChanges();
 
             return Ok();
         }
 
-        [Route("bankaccount/{id}/get-all")]
+        [Route("getAll/{id}")]
         public IHttpActionResult GetAll(int id)
         {
             var bankaccount = Context
@@ -204,43 +195,60 @@ namespace HouseholdBudgeter.Controllers
             return Ok(model);
         }
 
-        [Route("{id}/void")]
+        
+        [HttpPost]
+        [Route("void/{id}")]
         public IHttpActionResult Void(int id)
         {
+            var userId = User.Identity.GetUserId();
+
             var transaction = Context
                 .Transactions
                 .FirstOrDefault(p => p.Id == id);
 
             if (transaction == null)
             {
-                ModelState.AddModelError("Transaction Not found", "Transaction id Provided does not exist");
-                return BadRequest(ModelState);
+                return NotFound();
             }
 
-            var owner = transaction
-                .BankAccount
-                .HouseHold
-                .OwnerId;
-
-            var userId = User
-              .Identity
-              .GetUserId();
-
-            var creator = transaction
-                .Creator
-                .Id;
-
-            if (userId != creator && owner != userId)
+            if (transaction.BankAccount.HouseHold.OwnerId != userId &&
+                transaction.CreatorId != userId)
             {
-                ModelState.AddModelError("Not the owner or creator", "Only the creator of the transaction or owner of the Household can void it");
+                ModelState.AddModelError("",
+                    "You are not allowed to void this transaction");
                 return BadRequest(ModelState);
             }
 
+            if (transaction.Void)
+            {
+                ModelState.AddModelError("",
+                    "This transaction has already been voided");
+                return BadRequest(ModelState);
+            }
+
+            transaction.BankAccount.Balance -= transaction.Amount;
             transaction.Void = true;
-            transaction.BankAccount.Balance = transaction.Amount - transaction.BankAccount.Balance;
+
             Context.SaveChanges();
 
             return Ok();
+        }
+
+        [Route("get/{id}")]
+        public IHttpActionResult Get(int id)
+        {
+            var transaction = Context
+                            .Transactions
+                            .FirstOrDefault(p => p.Id == id);
+
+            if (transaction == null)
+            {
+                return NotFound();
+            }
+
+            var model = Mapper.Map<TransactionViewModel>(transaction);
+
+            return Ok(model);
         }
     }
 }

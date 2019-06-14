@@ -6,7 +6,7 @@ using System.Web;
 
 namespace HouseholdBudgeter.Models
 {
-    public class TransactionBindingModel
+    public class EditTransactionBindingModel
     {
         [Required]
         public string Title { get; set; }
@@ -21,8 +21,5 @@ namespace HouseholdBudgeter.Models
 
         [Required]
         public int CategoryId { get; set; }
-
-        [Required]
-        public int BankAccountId { get; set; }
     }
 }
