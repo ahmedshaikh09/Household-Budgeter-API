@@ -71,7 +71,6 @@ namespace HouseholdBudgeter.Controllers
         }
 
         [Route("edit/{id}")]
-        [HttpPost]
         public IHttpActionResult Edit(int id, EditTransactionBindingModel model)
         {
             if (!ModelState.IsValid)
@@ -250,6 +249,8 @@ namespace HouseholdBudgeter.Controllers
 
             return Ok(model);
         }
+
+       
     }
 }
 
